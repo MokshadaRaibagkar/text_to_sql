@@ -10,8 +10,6 @@ This application allows users to convert natural language queries into SQL queri
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
 
 ---
 
