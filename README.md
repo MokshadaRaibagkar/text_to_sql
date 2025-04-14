@@ -45,50 +45,60 @@ To run the app locally, follow these steps:
 
 ### Steps
 
-1. Clone the repository to your local machine:
+### 1. Clone the Repository
 
-    ```bash
-    git clone https://github.com/MokshadaRaibagkar/text_to_sql.git
-    ```
+```bash
+git clone https://github.com/MokshadaRaibagkar/text_to_sql.git
+```
 
-2. Navigate to the project directory:
+### 2. Navigate to the Project Folder
 
-    ```bash
-    cd text-to-sql
-    ```
+```bash
+cd text_to_sql
+```
 
-3. Create a virtual environment:
+### 3. Create a Virtual Environment
 
-    ```bash
-    python -m venv venv
-    ```
+```bash
+python -m venv venv
+```
 
-4. Activate the virtual environment:
-   - **Windows:**
-   
-     ```bash
-     .\venv\Scripts\activate
-     ```
+### 4. Activate the Virtual Environment
 
-   - **macOS/Linux:**
-   
-     ```bash
-     source venv/bin/activate
-     ```
+- **Windows**:
+  ```bash
+  .\venv\Scripts\activate
+  ```
+- **macOS/Linux**:
+  ```bash
+  source venv/bin/activate
+  ```
 
-5. Install the required dependencies:
+> ⚠️ The `venv/` folder is excluded via `.gitignore`, so make sure to create your own virtual environment before running the app.
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+### 5. Install Dependencies
 
----
+```bash
+pip install -r requirements.txt
+```
 
-## Usage
+### 6. Add Your API Key
 
-### Running the Application
+This app requires a valid API key (e.g., Google Generative AI).  
 
-After installation, you can run the application locally by using the following command:
+1. Create a `.env` file in the root of the project.
+2. Add the following line with your actual API key:
+
+```env
+GOOGLE_API_KEY=your_api_key_here
+```
+
+### 7. Run the Streamlit App
 
 ```bash
 streamlit run app.py
+```
+## Author
+
+**Mokshada Raibagkar**  
+[GitHub](https://github.com/MokshadaRaibagkar)
