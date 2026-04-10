@@ -1,65 +1,126 @@
 from dotenv import load_dotenv
-load_dotenv() ##load all the environment variables
+load_dotenv()
 
 import streamlit as st
 import os
 import sqlite3
-
+import pandas as pd
 import google.generativeai as genai
 
-##Configure our API key
+# Configure API
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-#Function to Load Google Gemini Model and provide sql query as response
-def get_gemini_response(question,prompt):
-    model=genai.GenerativeModel('gemini-1.5-pro')
-    response=model.generate_content([prompt[0],question])
-    return response.text
+# -----------------------------
+# Gemini Function (FIXED)
+# -----------------------------
+def get_gemini_response(question, prompt):
+    model = genai.GenerativeModel('models/gemini-flash-latest')
 
-## Function to retrieve query form the sql database
-def read_sql_query(sql,db):
-    conn=sqlite3.connect(db)
-    cur=conn.cursor()
-    cur.execute(sql)
-    rows=cur.fetchall()
-    conn.commit()
-    conn.close()
-    for row in rows:
-        print(row)
-    return rows
+    response = model.generate_content(
+        prompt[0] + "\nUser Question: " + question
+    )
 
-## Define Your Prompt
-prompt=[
+    sql = response.text.strip()
 
-    """
-    You are an expert in converting English questions to SQL query!
-    The SQL database has the name STUDENT and has the following columns - NAME, CLASS, 
-    SECTION and MARKS\n\nFor example,\nExample 1 - How many entries of records are present?, 
-    the SQL command will be something like this SELECT COUNT(*) FROM STUDENT ;
-    \nExample 2 - Tell me all the students studying in Data Science class?, 
-    the SQL command will be something like this SELECT * FROM STUDENT 
-    where CLASS="Data Science"; 
-    also the sql code should not have ``` in beginning or end and sql word in output
+    # Clean unwanted formatting
+    sql = sql.replace("```sql", "").replace("```", "").strip()
 
-    """
-]
+    return sql
 
 
-## Streamlit App
+# -----------------------------
+# SQL Execution Function
+# -----------------------------
+def read_sql_query(sql, db):
+    try:
+        conn = sqlite3.connect(db)
+        cur = conn.cursor()
 
-st.set_page_config(page_title="I can Retrieve Any SQL query")
-st.header("Gemini App To Retrieve SQL Data")
+        cur.execute(sql)
+        rows = cur.fetchall()
 
-question=st.text_input("Input: ",key="input")
+        columns = [desc[0] for desc in cur.description]
 
-submit=st.button("Ask the question")
+        conn.close()
 
-# if submit is clicked
-if submit:
-    response=get_gemini_response(question,prompt)
-    print(response)
-    data=read_sql_query(response,"student.db")
-    st.subheader("The Response is")
-    for row in data:
-        print(row)
-        st.header(row)
+        return rows, columns
+
+    except Exception as e:
+        return str(e), None
+
+
+# -----------------------------
+# Prompt (Improved)
+# -----------------------------
+prompt = ["""
+You are an expert SQL query generator.
+
+Database Name: STUDENT
+Columns:
+- NAME
+- CLASS
+- SECTION
+- MARKS
+
+Rules:
+- Return ONLY SQL query
+- No explanation
+- No ``` 
+- Use correct SQLite syntax
+- Column names must match exactly
+
+Examples:
+
+Q: Show all students
+A: SELECT * FROM STUDENT;
+
+Q: Students with marks above 80
+A: SELECT * FROM STUDENT WHERE MARKS > 80;
+
+Q: Count total students
+A: SELECT COUNT(*) FROM STUDENT;
+
+Q: Show students in AIML class
+A: SELECT * FROM STUDENT WHERE CLASS = 'AIML';
+"""]
+
+
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.set_page_config(page_title="Text to SQL App", layout="centered")
+
+st.title("📊 Text to SQL - Student Database")
+st.write("Ask questions in English and get SQL results instantly!")
+
+# Input
+question = st.text_input("💬 Enter your question:")
+
+# Button
+if st.button("Run Query"):
+
+    if question:
+        # Generate SQL
+        sql_query = get_gemini_response(question, prompt)
+
+        st.subheader("🧠 Generated SQL:")
+        st.code(sql_query, language="sql")
+
+        # Run SQL
+        result, columns = read_sql_query(sql_query, "student.db")
+
+        st.subheader("📋 Result:")
+
+        if columns is None:
+            st.error(result)
+        else:
+            df = pd.DataFrame(result, columns=columns)
+            st.dataframe(df)
+
+            # 🔥 BONUS: Chart (boost marks)
+            if "MARKS" in df.columns:
+                st.subheader("📊 Marks Visualization")
+                st.bar_chart(df["MARKS"])
+
+    else:
+        st.warning("Please enter a question!")
